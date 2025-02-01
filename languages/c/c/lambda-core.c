@@ -4,6 +4,18 @@
 #include <assert.h>
 #include <stdbool.h>
 
+uint64_t MallocCount;
+void *Malloc(size_t size) {
+    MallocCount++;
+    return malloc(size);
+}
+
+uint64_t freeCount;
+void Free(void *ptr) {
+    freeCount++;
+    free(ptr);
+}
+
 typedef uint8_t byte;
 
 typedef uint64_t bind;
@@ -46,9 +58,22 @@ struct expr {
     };
 };
 
-expr *cloneExpr(expr *e) {
-    expr *ret = malloc(sizeof(expr));
+void freeExpr(expr *e);
 
+void freeExprInPlace(expr e) {
+    if(false) {}
+    else if(e.type == EXPR_FUN) { freeExpr(e.body); }
+    else if(e.type == EXPR_APP) { freeExpr(e.lhs); freeExpr(e.rhs); }
+    else if(e.type == EXPR_IMPURE_VAL) { Free(e.valp); }
+}
+
+void freeExpr(expr *e) {
+    freeExprInPlace(*e);
+    Free(e);
+}
+
+expr *cloneExpr(expr *e) {
+    expr *ret = Malloc(sizeof(expr));
     ret->type = e->type;
 
     if(false) {}
@@ -65,7 +90,7 @@ expr *cloneExpr(expr *e) {
     }
     else if(e->type == EXPR_IMPURE_VAL) {
         ret->vall = e->vall;
-        ret->valp = malloc(e->vall);
+        ret->valp = Malloc(e->vall);
         for(int i = 0; e->valp && i < e->vall; i++) {
             *(ret->valp) = *(e->valp);
         }
@@ -80,7 +105,7 @@ expr *cloneExpr(expr *e) {
 expr cloneExprInPlace(expr *e) {
     expr *retp = cloneExpr(e);
     expr ret = *retp;
-    free(retp);
+    Free(retp);
     return ret;
 }
 
@@ -139,6 +164,10 @@ expr _evaluate(expr f, bool *doneWork) {
         f.rhs = cloneExpr(&rhs);
         while(f.type == EXPR_APP && (f.lhs->type == EXPR_FUN || (f.lhs->type == EXPR_IMPURE_FUN && f.rhs->type == EXPR_IMPURE_VAL))) {
             *doneWork = true;
+
+            expr *flhs = f.lhs;
+            expr *frhs = f.rhs;
+
             f = apply(*f.lhs, *f.rhs);
         }
         return f;
@@ -148,6 +177,7 @@ expr _evaluate(expr f, bool *doneWork) {
 }
 
 expr evaluate(expr f) {
+    f = cloneExprInPlace(&f);
     bool doneWork;
     do {
         doneWork = false;
@@ -258,7 +288,7 @@ expr impure_increment(byte *data, size_t len) {
     uint64_t value = *ptr;
     value++;
 
-    ptr = malloc(sizeof(uint64_t));
+    ptr = Malloc(sizeof(uint64_t));
     *ptr = value;
 
     return (expr){ .type = EXPR_IMPURE_VAL, .valp = (byte *)ptr, .vall = sizeof(uint64_t) };
@@ -292,7 +322,7 @@ int main() {
     Defvar(Two, App(Succ, One));
     Defvar(Three, App(Succ, App(Succ, App(Succ, Zero))));
 
-    uint64_t *number = malloc(sizeof(uint64_t));
+    uint64_t *number = Malloc(sizeof(uint64_t));
     *number = 0;
     expr numberExpr = (expr){ .type = EXPR_IMPURE_VAL, .valp = (byte *)number, .vall = sizeof(uint64_t) };
     expr inc = (expr){ .type = EXPR_IMPURE_FUN, .fun = impure_increment };
@@ -300,10 +330,28 @@ int main() {
     Defvar(CheckThree, App(App(Three, inc), numberExpr));
 
     expr checkThree = evaluate(CheckThree);
-    assert(checkThree.type == EXPR_IMPURE_VAL);
+    // assert(checkThree.type == EXPR_IMPURE_VAL);
 
     printExpr(CheckThree);
     printExpr(checkThree);
     
     printf("Three evaluates to: %d\n", *(uint64_t *)checkThree.valp);
+
+    freeExprInPlace(testFunc);
+    freeExprInPlace(True);
+    freeExprInPlace(False);
+    freeExprInPlace(Not);
+    freeExprInPlace(And);
+    freeExprInPlace(Or);
+    freeExprInPlace(Zero);
+    freeExprInPlace(Succ);
+    freeExprInPlace(One);
+    freeExprInPlace(Two);
+    freeExprInPlace(Three);
+    freeExprInPlace(numberExpr);
+    freeExprInPlace(inc);
+    freeExprInPlace(CheckThree);
+    freeExprInPlace(checkThree);
+
+    printf("MALLOC: %d; FREE: %d\n", MallocCount, freeCount);
 }

@@ -67,7 +67,7 @@ expr *cloneExpr(expr *e) {
         ret->vall = e->vall;
         ret->valp = malloc(e->vall);
         for(int i = 0; e->valp && i < e->vall; i++) {
-            *ret->valp = *e->valp;
+            *(ret->valp) = *(e->valp);
         }
     }
     else if(e->type == EXPR_IMPURE_FUN) {
@@ -112,9 +112,25 @@ expr apply(expr f, expr e) {
 }
 
 expr evaluate(expr f) {
-    while(f.type == EXPR_APP) {
-        f = apply(*f.lhs, *f.rhs);
+    if(false) {}
+    else if(f.type == EXPR_BIND) {
+        return f;
     }
+    else if(f.type == EXPR_FUN) {
+        *f.body = evaluate(*f.body);
+        return f;
+    }
+    else if(f.type == EXPR_APP) {
+        expr lhs = evaluate(*f.lhs);
+        expr rhs = evaluate(*f.rhs);
+        f.lhs = cloneExpr(&lhs);
+        f.rhs = cloneExpr(&rhs);
+        while(f.type == EXPR_APP && f.lhs->type == EXPR_FUN) {
+            f = apply(*f.lhs, *f.rhs);
+        }
+        return f;
+    }
+
     return f;
 }
 
@@ -165,6 +181,49 @@ expr evaluate(expr f) {
         fname = __ftemp; \
     }
 
+#define Defvar(vname, body) \
+    expr vname; \
+    { \
+        expr temp = body; \
+        vname = temp; \
+    }
+
+char getVarName(bind b, size_t *lastTaken, bind binds[], char vars[]) {
+    for(int i = 0; i < *lastTaken; i++) {
+        if(binds[i] == b) return vars[i];
+    }
+
+    binds[*lastTaken] = b;
+    (*lastTaken)++;
+    return vars[*lastTaken - 1];
+}
+
+void _printExpr(expr e, size_t *lastTaken, bind binds[], char vars[], bool isRhs) {
+    if(false) {}
+    else if(e.type == EXPR_BIND) {
+        printf("%c", getVarName(e.bind, lastTaken, binds, vars));
+    }
+    else if(e.type == EXPR_FUN) {
+        printf("( λ%c.", getVarName(e.arg, lastTaken, binds, vars));
+        _printExpr(*e.body, lastTaken, binds, vars, false);
+        printf(" )");
+    }
+    else if(e.type == EXPR_APP) {
+        if(isRhs) printf("(");
+        _printExpr(*e.lhs, lastTaken, binds, vars, false);
+        _printExpr(*e.rhs, lastTaken, binds, vars, true);
+        if(isRhs) printf(")");
+    }
+}
+
+void printExpr(expr e) {
+    bind binds[52] = {0};
+    char vars[52] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    size_t lastTaken = 0;
+    _printExpr(e, &lastTaken, binds, vars, false);
+    printf("\n");
+}
+
 int main() {
 
     /*
@@ -189,7 +248,21 @@ int main() {
     Defun(Zero, s, Fun(z, Bind(z)));
     Defun(Succ, w, Fun(y, Fun(x, App(Bind(y), App(App(Bind(w), Bind(y)), Bind(x))))));
 
-    Defun(One, _, App(Succ, Zero));
+    Defvar(One, App(Succ, Zero));
+    Defvar(Two, App(Succ, One));
 
-    expr test = evaluate(One);
+    expr two = Two;
+    printExpr(two);
+
+    two = evaluate(two);
+    printExpr(two);
+
+    two = evaluate(two);
+    printExpr(two);
+
+    two = evaluate(two);
+    printExpr(two);
+
+    two = evaluate(two);
+    printExpr(two);
 }

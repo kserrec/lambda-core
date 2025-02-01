@@ -7,6 +7,7 @@
 typedef uint8_t byte;
 
 typedef uint64_t bind;
+bind last;
 
 typedef uint8_t expr_type;
 #define EXPR_BIND 0
@@ -47,6 +48,7 @@ struct expr {
 
 expr *cloneExpr(expr *e) {
     expr *ret = malloc(sizeof(expr));
+
     ret->type = e->type;
 
     if(false) {}
@@ -102,8 +104,6 @@ expr apply(expr f, expr e) {
     return substitute(*f.body, f.arg, e);
 }
 
-bind last;
-
 #define var(n) bind n = last++;
 
 #define Bind(bi) (expr){ .type = EXPR_BIND, .bind = (bi) };
@@ -128,12 +128,14 @@ bind last;
 #define Fun(b, body) \
     {0}; \
     var(b); \
-    expr __ftemp; \
     { \
-        expr temp = body; \
-        __ftemp = mkFun(&temp); \
+        expr __ftemp; \
+        { \
+            expr temp = body; \
+            __ftemp = mkFun(&temp); \
+        } \
+        temp = __ftemp; \
     } \
-    temp = __ftemp; \
     temp.arg = b;
 
 #define Defun(fname, b, body) \
@@ -154,6 +156,7 @@ int main() {
     /*
        testFunc = \a . (\a . a) a
     */
+
     Defun(testFunc, a,
         App(
             Fun(a, Bind(a)),
@@ -161,8 +164,8 @@ int main() {
         )
     );
 
-    Defun(True, t, Fun(f, Bind(t)));
-    Defun(False, t, Fun(f, Bind(f)));
+    Defun(True, x, Fun(y, Bind(x)));
+    Defun(False, x, Fun(y, Bind(y)));
 
     Defun(Not, v, App(App(Bind(v), False), True));
 
@@ -170,4 +173,7 @@ int main() {
     Defun(Or, a, Fun(b, App(App(Bind(a), True), Bind(b))));
 
     expr test = apply(Not, True);
+
+    Defun(Zero, s, Fun(z, Bind(z)));
+    Defun(Succ, w, Fun(y, Fun(x, App(Bind(y), App(App(Bind(w), Bind(y)), Bind(x))))));
 }

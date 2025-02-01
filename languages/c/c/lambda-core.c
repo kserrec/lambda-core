@@ -162,51 +162,42 @@ expr apply(expr f, expr e) {
 expr _evaluate(expr f, bool *doneWork) {
     if(false) {}
     else if(f.type == EXPR_BIND) {
-        return cloneExprInPlace(&f);
     }
     else if(f.type == EXPR_FUN) {
         expr toFree = *f.body;
         *f.body = _evaluate(*f.body, doneWork);
         // freeExprInPlace(toFree);
-        return f;
     }
     else if(f.type == EXPR_APP) {
-        // TODO: currently this double-frees, revisit later
         expr *toFreeL = f.lhs;
         expr *toFreeR = f.rhs;
         expr lhs = _evaluate(*f.lhs, doneWork);
         expr rhs = _evaluate(*f.rhs, doneWork);
         f.lhs = cloneExpr(&lhs);
         f.rhs = cloneExpr(&rhs);
-        // freeExprInPlace(lhs);
-        // freeExprInPlace(rhs);
+        freeExprInPlace(lhs);
+        freeExprInPlace(rhs);
         // freeExpr(toFreeL);
         // freeExpr(toFreeR);
+
+        bool first = true;
         while(f.type == EXPR_APP && (f.lhs->type == EXPR_FUN || (f.lhs->type == EXPR_IMPURE_FUN && f.rhs->type == EXPR_IMPURE_VAL))) {
             *doneWork = true;
-
-            // expr toFree = f;
             f = apply(*f.lhs, *f.rhs);
-            // freeExprInPlace(toFree);
         }
-        return f;
     }
 
-    return f;
+    return cloneExprInPlace(&f);
 }
 
 expr evaluate(expr f) {
     f = cloneExprInPlace(&f);
-    expr lastFreed = {0};
-    bool lastFreedUsed = false;
     bool doneWork;
     do {
         doneWork = false;
         expr nf = _evaluate(f, &doneWork);
 
-        if(doneWork) { if(lastFreedUsed) freeExprInPlace(lastFreed); else lastFreedUsed = true; }
-        lastFreed = f;
-        f = nf;
+        if(doneWork) { freeExprInPlace(f); f = nf; }
     } while(doneWork);
     return f;
 }
@@ -360,6 +351,8 @@ int main() {
     printExpr(CheckThree);
     printExpr(checkThree);
     
+    evaluate(One);
+
     printf("Three evaluates to: %d\n", *(uint64_t *)checkThree.valp);
 
     freeExprInPlace(testFunc);

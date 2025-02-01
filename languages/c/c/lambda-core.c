@@ -298,8 +298,12 @@ int main() {
     expr inc = (expr){ .type = EXPR_IMPURE_FUN, .fun = impure_increment };
 
     Defvar(CheckThree, App(App(Three, inc), numberExpr));
+
     expr checkThree = evaluate(CheckThree);
     assert(checkThree.type == EXPR_IMPURE_VAL);
+
+    printExpr(CheckThree);
+    printExpr(checkThree);
     
     printf("Three evaluates to: %d\n", *(uint64_t *)checkThree.valp);
 }

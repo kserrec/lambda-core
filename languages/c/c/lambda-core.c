@@ -12,6 +12,7 @@ void *Malloc(size_t size) {
 
 uint64_t freeCount;
 void Free(void *ptr) {
+    if(ptr == 0) return;
     freeCount++;
     free(ptr);
 }
@@ -113,22 +114,28 @@ expr substitute(expr body, bind b, expr subst) {
     if(false) {}
     else if(body.type == EXPR_BIND) {
         if(body.bind == b)  return cloneExprInPlace(&subst);
-        else                return body;  
+        else                return cloneExprInPlace(&body);  
     }
     else if(body.type == EXPR_FUN) {
+        expr toFree = *body.body;
         *body.body = substitute(*body.body, b, subst);
-        return body;
+        freeExprInPlace(toFree);
+        return cloneExprInPlace(&body);
     }
     else if(body.type == EXPR_APP) {
+        expr toFreeL = *body.lhs;
+        expr toFreeR = *body.rhs;
         *body.lhs = substitute(*body.lhs, b, subst);
         *body.rhs = substitute(*body.rhs, b, subst);
-        return body;
+        freeExprInPlace(toFreeL);
+        freeExprInPlace(toFreeR);
+        return cloneExprInPlace(&body);
     }
     else if(body.type == EXPR_IMPURE_VAL) {
-        return body;
+        return cloneExprInPlace(&body);
     }
     else if(body.type == EXPR_IMPURE_FUN) {
-        return body;
+        return cloneExprInPlace(&body);
     }
 }
 
@@ -141,34 +148,46 @@ expr apply(expr f, expr e) {
     assert(f.type == EXPR_FUN || (f.type == EXPR_IMPURE_FUN && e.type == EXPR_IMPURE_VAL));
 
     if(f.type == EXPR_FUN) {
-        return substitute(*f.body, f.arg, e);
+        expr result = substitute(*f.body, f.arg, e);
+        expr nresult = cloneExprInPlace(&result);
+        freeExprInPlace(result);
+        return nresult;
     }
     else {
-        return f.fun(e.valp, e.vall);
+        expr result = f.fun(e.valp, e.vall);
+        return result;
     }
 }
 
 expr _evaluate(expr f, bool *doneWork) {
     if(false) {}
     else if(f.type == EXPR_BIND) {
-        return f;
+        return cloneExprInPlace(&f);
     }
     else if(f.type == EXPR_FUN) {
+        expr toFree = *f.body;
         *f.body = _evaluate(*f.body, doneWork);
+        // freeExprInPlace(toFree);
         return f;
     }
     else if(f.type == EXPR_APP) {
+        // TODO: currently this double-frees, revisit later
+        expr *toFreeL = f.lhs;
+        expr *toFreeR = f.rhs;
         expr lhs = _evaluate(*f.lhs, doneWork);
         expr rhs = _evaluate(*f.rhs, doneWork);
         f.lhs = cloneExpr(&lhs);
         f.rhs = cloneExpr(&rhs);
+        // freeExprInPlace(lhs);
+        // freeExprInPlace(rhs);
+        // freeExpr(toFreeL);
+        // freeExpr(toFreeR);
         while(f.type == EXPR_APP && (f.lhs->type == EXPR_FUN || (f.lhs->type == EXPR_IMPURE_FUN && f.rhs->type == EXPR_IMPURE_VAL))) {
             *doneWork = true;
 
-            expr *flhs = f.lhs;
-            expr *frhs = f.rhs;
-
+            // expr toFree = f;
             f = apply(*f.lhs, *f.rhs);
+            // freeExprInPlace(toFree);
         }
         return f;
     }
@@ -178,10 +197,16 @@ expr _evaluate(expr f, bool *doneWork) {
 
 expr evaluate(expr f) {
     f = cloneExprInPlace(&f);
+    expr lastFreed = {0};
+    bool lastFreedUsed = false;
     bool doneWork;
     do {
         doneWork = false;
-        f = _evaluate(f, &doneWork);
+        expr nf = _evaluate(f, &doneWork);
+
+        if(doneWork) { if(lastFreedUsed) freeExprInPlace(lastFreed); else lastFreedUsed = true; }
+        lastFreed = f;
+        f = nf;
     } while(doneWork);
     return f;
 }
@@ -330,7 +355,7 @@ int main() {
     Defvar(CheckThree, App(App(Three, inc), numberExpr));
 
     expr checkThree = evaluate(CheckThree);
-    // assert(checkThree.type == EXPR_IMPURE_VAL);
+    assert(checkThree.type == EXPR_IMPURE_VAL);
 
     printExpr(CheckThree);
     printExpr(checkThree);

@@ -77,19 +77,26 @@ expr *cloneExpr(expr *e) {
     return ret;
 }
 
-expr substitute(expr body, bind b, expr e) {
+expr cloneExprInPlace(expr *e) {
+    expr *retp = cloneExpr(e);
+    expr ret = *retp;
+    free(retp);
+    return ret;
+}
+
+expr substitute(expr body, bind b, expr subst) {
     if(false) {}
     else if(body.type == EXPR_BIND) {
-        if(body.bind == b) return e;
-        else            return body;  
+        if(body.bind == b)  return cloneExprInPlace(&subst);
+        else                return body;  
     }
     else if(body.type == EXPR_FUN) {
-        *body.body = substitute(*body.body, b, e);
+        *body.body = substitute(*body.body, b, subst);
         return body;
     }
     else if(body.type == EXPR_APP) {
-        *body.lhs = substitute(*body.lhs, b, e);
-        *body.rhs = substitute(*body.rhs, b, e);
+        *body.lhs = substitute(*body.lhs, b, subst);
+        *body.rhs = substitute(*body.rhs, b, subst);
         return body;
     }
 }
@@ -102,6 +109,13 @@ expr mkFun(expr *body) {
 expr apply(expr f, expr e) {
     assert(f.type == EXPR_FUN);
     return substitute(*f.body, f.arg, e);
+}
+
+expr evaluate(expr f) {
+    while(f.type == EXPR_APP) {
+        f = apply(*f.lhs, *f.rhs);
+    }
+    return f;
 }
 
 #define var(n) bind n = last++;
@@ -172,8 +186,10 @@ int main() {
     Defun(And, a, Fun(b, App(App(Bind(a), Bind(b)), False)));
     Defun(Or, a, Fun(b, App(App(Bind(a), True), Bind(b))));
 
-    expr test = apply(Not, True);
-
     Defun(Zero, s, Fun(z, Bind(z)));
     Defun(Succ, w, Fun(y, Fun(x, App(Bind(y), App(App(Bind(w), Bind(y)), Bind(x))))));
+
+    Defun(One, _, App(Succ, Zero));
+
+    expr test = evaluate(One);
 }

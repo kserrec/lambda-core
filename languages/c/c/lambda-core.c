@@ -99,6 +99,12 @@ expr substitute(expr body, bind b, expr subst) {
         *body.rhs = substitute(*body.rhs, b, subst);
         return body;
     }
+    else if(body.type == EXPR_IMPURE_VAL) {
+        return body;
+    }
+    else if(body.type == EXPR_IMPURE_FUN) {
+        return body;
+    }
 }
 
 expr mkFun(expr *body) {
@@ -107,8 +113,14 @@ expr mkFun(expr *body) {
 }
 
 expr apply(expr f, expr e) {
-    assert(f.type == EXPR_FUN);
-    return substitute(*f.body, f.arg, e);
+    assert(f.type == EXPR_FUN || (f.type == EXPR_IMPURE_FUN && e.type == EXPR_IMPURE_VAL));
+
+    if(f.type == EXPR_FUN) {
+        return substitute(*f.body, f.arg, e);
+    }
+    else {
+        return f.fun(e.valp, e.vall);
+    }
 }
 
 expr _evaluate(expr f, bool *doneWork) {
@@ -125,7 +137,7 @@ expr _evaluate(expr f, bool *doneWork) {
         expr rhs = _evaluate(*f.rhs, doneWork);
         f.lhs = cloneExpr(&lhs);
         f.rhs = cloneExpr(&rhs);
-        while(f.type == EXPR_APP && f.lhs->type == EXPR_FUN) {
+        while(f.type == EXPR_APP && (f.lhs->type == EXPR_FUN || (f.lhs->type == EXPR_IMPURE_FUN && f.rhs->type == EXPR_IMPURE_VAL))) {
             *doneWork = true;
             f = apply(*f.lhs, *f.rhs);
         }
@@ -224,6 +236,12 @@ void _printExpr(expr e, size_t *lastTaken, bind binds[], char vars[], bool isRhs
         _printExpr(*e.rhs, lastTaken, binds, vars, true);
         if(isRhs) printf(")");
     }
+    else if(e.type == EXPR_IMPURE_VAL) {
+        printf("[%d bytes]", e.vall);
+    }
+    else if(e.type == EXPR_IMPURE_FUN) {
+        printf("<fun>");
+    }
 }
 
 void printExpr(expr e) {
@@ -232,6 +250,18 @@ void printExpr(expr e) {
     size_t lastTaken = 0;
     _printExpr(e, &lastTaken, binds, vars, false);
     printf("\n");
+}
+
+expr impure_increment(byte *data, size_t len) {
+    assert(len == sizeof(uint64_t));
+    uint64_t *ptr = (uint64_t *)data;
+    uint64_t value = *ptr;
+    value++;
+
+    ptr = malloc(sizeof(uint64_t));
+    *ptr = value;
+
+    return (expr){ .type = EXPR_IMPURE_VAL, .valp = (byte *)ptr, .vall = sizeof(uint64_t) };
 }
 
 int main() {
@@ -262,6 +292,14 @@ int main() {
     Defvar(Two, App(Succ, One));
     Defvar(Three, App(Succ, App(Succ, App(Succ, Zero))));
 
-    printExpr(Three);
-    printExpr(evaluate(Three));
+    uint64_t *number = malloc(sizeof(uint64_t));
+    *number = 0;
+    expr numberExpr = (expr){ .type = EXPR_IMPURE_VAL, .valp = (byte *)number, .vall = sizeof(uint64_t) };
+    expr inc = (expr){ .type = EXPR_IMPURE_FUN, .fun = impure_increment };
+
+    Defvar(CheckThree, App(App(Three, inc), numberExpr));
+    expr checkThree = evaluate(CheckThree);
+    assert(checkThree.type == EXPR_IMPURE_VAL);
+    
+    printf("Three evaluates to: %d\n", *(uint64_t *)checkThree.valp);
 }

@@ -111,26 +111,36 @@ expr apply(expr f, expr e) {
     return substitute(*f.body, f.arg, e);
 }
 
-expr evaluate(expr f) {
+expr _evaluate(expr f, bool *doneWork) {
     if(false) {}
     else if(f.type == EXPR_BIND) {
         return f;
     }
     else if(f.type == EXPR_FUN) {
-        *f.body = evaluate(*f.body);
+        *f.body = _evaluate(*f.body, doneWork);
         return f;
     }
     else if(f.type == EXPR_APP) {
-        expr lhs = evaluate(*f.lhs);
-        expr rhs = evaluate(*f.rhs);
+        expr lhs = _evaluate(*f.lhs, doneWork);
+        expr rhs = _evaluate(*f.rhs, doneWork);
         f.lhs = cloneExpr(&lhs);
         f.rhs = cloneExpr(&rhs);
         while(f.type == EXPR_APP && f.lhs->type == EXPR_FUN) {
+            *doneWork = true;
             f = apply(*f.lhs, *f.rhs);
         }
         return f;
     }
 
+    return f;
+}
+
+expr evaluate(expr f) {
+    bool doneWork;
+    do {
+        doneWork = false;
+        f = _evaluate(f, &doneWork);
+    } while(doneWork);
     return f;
 }
 
@@ -250,19 +260,8 @@ int main() {
 
     Defvar(One, App(Succ, Zero));
     Defvar(Two, App(Succ, One));
+    Defvar(Three, App(Succ, App(Succ, App(Succ, Zero))));
 
-    expr two = Two;
-    printExpr(two);
-
-    two = evaluate(two);
-    printExpr(two);
-
-    two = evaluate(two);
-    printExpr(two);
-
-    two = evaluate(two);
-    printExpr(two);
-
-    two = evaluate(two);
-    printExpr(two);
+    printExpr(Three);
+    printExpr(evaluate(Three));
 }

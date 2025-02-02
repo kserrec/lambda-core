@@ -15,6 +15,13 @@
 // represent the amount of malloc calls), uncomment the following line:
 // #define MEM_STATS
 
+// Main source:
+// https://personal.utdallas.edu/~gupta/courses/apl/lambda.pdf
+//
+// Factorial definition (though it's not hard to derive yourself),
+// Z combinator definition:
+// https://en.wikipedia.org/wiki/Fixed-point_combinator
+
 // NOTE: In this implementation I tried to use the most simple
 // C features, thus I'm using malloc instead of arenas or smth,
 // and represent expressions as a tree, rather than a dedicated

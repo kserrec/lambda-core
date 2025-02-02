@@ -17,6 +17,10 @@ void Free(void *ptr) {
     free(ptr);
 }
 
+// ==================
+// TYPES
+// ==================
+
 typedef uint8_t byte;
 
 typedef uint64_t bind;
@@ -58,6 +62,10 @@ struct expr {
         };
     };
 };
+
+// ==================
+// UTILITY
+// ==================
 
 void freeExpr(expr *e);
 
@@ -110,6 +118,15 @@ expr cloneExprInPlace(expr *e) {
     return ret;
 }
 
+expr mkFun(expr *body) {
+    expr fun = { .type = EXPR_FUN, .arg = 0, .body = cloneExpr(body) };
+    return fun;
+}
+
+// ==================
+// EVALUATING
+// ==================
+
 expr substitute(expr body, bind b, expr subst) {
     if(false) {}
     else if(body.type == EXPR_BIND) {
@@ -137,11 +154,6 @@ expr substitute(expr body, bind b, expr subst) {
     else if(body.type == EXPR_IMPURE_FUN) {
         return cloneExprInPlace(&body);
     }
-}
-
-expr mkFun(expr *body) {
-    expr fun = { .type = EXPR_FUN, .arg = 0, .body = cloneExpr(body) };
-    return fun;
 }
 
 expr apply(expr f, expr e) {
@@ -196,11 +208,61 @@ expr evaluate(expr f) {
     do {
         doneWork = false;
         expr nf = _evaluate(f, &doneWork);
-
         if(doneWork) { freeExprInPlace(f); f = nf; }
+        else         { freeExprInPlace(nf); }
     } while(doneWork);
     return f;
 }
+
+// ==================
+// PRINTING
+// ==================
+
+char getVarName(bind b, size_t *lastTaken, bind binds[], char vars[]) {
+    for(int i = 0; i < *lastTaken; i++) {
+        if(binds[i] == b) return vars[i];
+    }
+
+    binds[*lastTaken] = b;
+    (*lastTaken)++;
+    return vars[*lastTaken - 1];
+}
+
+void _printExpr(expr e, size_t *lastTaken, bind binds[], char vars[], bool isRhs) {
+    if(false) {}
+    else if(e.type == EXPR_BIND) {
+        printf("%c", getVarName(e.bind, lastTaken, binds, vars));
+    }
+    else if(e.type == EXPR_FUN) {
+        printf("( λ%c.", getVarName(e.arg, lastTaken, binds, vars));
+        _printExpr(*e.body, lastTaken, binds, vars, false);
+        printf(" )");
+    }
+    else if(e.type == EXPR_APP) {
+        if(isRhs) printf("(");
+        _printExpr(*e.lhs, lastTaken, binds, vars, false);
+        _printExpr(*e.rhs, lastTaken, binds, vars, true);
+        if(isRhs) printf(")");
+    }
+    else if(e.type == EXPR_IMPURE_VAL) {
+        printf("[%d bytes]", e.vall);
+    }
+    else if(e.type == EXPR_IMPURE_FUN) {
+        printf("<fun>");
+    }
+}
+
+void printExpr(expr e) {
+    bind binds[52] = {0};
+    char vars[52] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    size_t lastTaken = 0;
+    _printExpr(e, &lastTaken, binds, vars, false);
+    printf("\n");
+}
+
+// ==================
+// MACROS
+// ==================
 
 #define var(n) bind n = last++;
 
@@ -256,72 +318,31 @@ expr evaluate(expr f) {
         vname = temp; \
     }
 
-char getVarName(bind b, size_t *lastTaken, bind binds[], char vars[]) {
-    for(int i = 0; i < *lastTaken; i++) {
-        if(binds[i] == b) return vars[i];
-    }
+#define DefunImpure(fname, argty, argname, body) \
+    expr __##fname(byte *__##argname, size_t len) { \
+        assert(len == sizeof(argty)); \
+        argty argname = *(argty *)__##argname; \
+        body; \
+        __##argname = Malloc(sizeof(argty)); \
+        *__##argname = argname; \
+        return (expr){ .type = EXPR_IMPURE_VAL, .valp = __##argname, .vall = sizeof(argty) }; \
+    } \
+    expr fname = (expr){ .type = EXPR_IMPURE_FUN, .fun = __##fname };
 
-    binds[*lastTaken] = b;
-    (*lastTaken)++;
-    return vars[*lastTaken - 1];
-}
+#define DefvarImpure(vname, vty, vval) \
+    vty *__##vname = Malloc(sizeof(vty)); \
+    *__##vname = vval; \
+    expr vname = (expr){ .type = EXPR_IMPURE_VAL, .valp = (byte *)__##vname, .vall = sizeof(vty) }; \
+        
+// ==================
+// USAGE
+// ==================
 
-void _printExpr(expr e, size_t *lastTaken, bind binds[], char vars[], bool isRhs) {
-    if(false) {}
-    else if(e.type == EXPR_BIND) {
-        printf("%c", getVarName(e.bind, lastTaken, binds, vars));
-    }
-    else if(e.type == EXPR_FUN) {
-        printf("( λ%c.", getVarName(e.arg, lastTaken, binds, vars));
-        _printExpr(*e.body, lastTaken, binds, vars, false);
-        printf(" )");
-    }
-    else if(e.type == EXPR_APP) {
-        if(isRhs) printf("(");
-        _printExpr(*e.lhs, lastTaken, binds, vars, false);
-        _printExpr(*e.rhs, lastTaken, binds, vars, true);
-        if(isRhs) printf(")");
-    }
-    else if(e.type == EXPR_IMPURE_VAL) {
-        printf("[%d bytes]", e.vall);
-    }
-    else if(e.type == EXPR_IMPURE_FUN) {
-        printf("<fun>");
-    }
-}
-
-void printExpr(expr e) {
-    bind binds[52] = {0};
-    char vars[52] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    size_t lastTaken = 0;
-    _printExpr(e, &lastTaken, binds, vars, false);
-    printf("\n");
-}
-
-expr impure_increment(byte *data, size_t len) {
-    assert(len == sizeof(uint64_t));
-    uint64_t *ptr = (uint64_t *)data;
-    uint64_t value = *ptr;
-    value++;
-
-    ptr = Malloc(sizeof(uint64_t));
-    *ptr = value;
-
-    return (expr){ .type = EXPR_IMPURE_VAL, .valp = (byte *)ptr, .vall = sizeof(uint64_t) };
-}
+DefunImpure(ImpureIncrement, uint64_t, num, {
+    num++;
+});
 
 int main() {
-
-    /*
-       testFunc = \a . (\a . a) a
-    */
-
-    Defun(testFunc, a,
-        App(
-            Fun(a, Bind(a)),
-            Bind(a)
-        )
-    );
 
     Defun(True, x, Fun(y, Bind(x)));
     Defun(False, x, Fun(y, Bind(y)));
@@ -338,12 +359,8 @@ int main() {
     Defvar(Two, App(Succ, One));
     Defvar(Three, App(Succ, App(Succ, App(Succ, Zero))));
 
-    uint64_t *number = Malloc(sizeof(uint64_t));
-    *number = 0;
-    expr numberExpr = (expr){ .type = EXPR_IMPURE_VAL, .valp = (byte *)number, .vall = sizeof(uint64_t) };
-    expr inc = (expr){ .type = EXPR_IMPURE_FUN, .fun = impure_increment };
-
-    Defvar(CheckThree, App(App(Three, inc), numberExpr));
+    DefvarImpure(ImpureNumber, uint64_t, 0);
+    Defvar(CheckThree, App(App(Three, ImpureIncrement), ImpureNumber));
 
     expr checkThree = evaluate(CheckThree);
     assert(checkThree.type == EXPR_IMPURE_VAL);
@@ -366,8 +383,6 @@ int main() {
     freeExprInPlace(One);
     freeExprInPlace(Two);
     freeExprInPlace(Three);
-    freeExprInPlace(numberExpr);
-    freeExprInPlace(inc);
     freeExprInPlace(CheckThree);
     freeExprInPlace(checkThree);
 

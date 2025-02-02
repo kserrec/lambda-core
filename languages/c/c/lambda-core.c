@@ -1,9 +1,28 @@
-// #define MEM_STATS
+// =================================================
+// Scroll to the very bottom to see the demo :)
+// =================================================
 
-// #define SLOW
+// If you want to toggle off calculations that are VERY slow, comment
+// out the following line:
+#define SLOW
 
+// If you want to toggle off specific slow calculations, comment out
+// any of the following lines:
 #define SLOW_SUMNAT
 #define SLOW_FACTORIAL
+
+// If you want to see the memory usage of this demo (where numbers
+// represent the amount of malloc calls), uncomment the following line:
+// #define MEM_STATS
+
+// NOTE: In this implementation I tried to use the most simple
+// C features, thus I'm using malloc instead of arenas or smth,
+// and represent expressions as a tree, rather than a dedicated
+// binary format.
+// Because of this, this implementation is incredibly inefficient,
+// woops. This is not an example of good memory management !!!
+// Also, partially because of this, and partially to improve
+// ergonomics, unfortunately, this will either way leak some memory.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -266,7 +285,6 @@ expr evaluate(expr f) {
     f = cloneExprInPlace(&f);
     bool doneWork;
     do {
-        // printExpr(f);
         doneWork = false;
         expr nf = _evaluate(f, &doneWork);
         if(doneWork) { 
@@ -331,7 +349,6 @@ void printExpr(expr e) {
 // ==================
 // MACROS
 // ==================
-
 
 #define Bind(bi) (expr){ .type = EXPR_BIND, .bind = (bi) };
 

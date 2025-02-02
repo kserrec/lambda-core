@@ -1,3 +1,10 @@
+// #define MEM_STATS
+
+// #define SLOW
+
+#define SLOW_SUMNAT
+#define SLOW_FACTORIAL
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -5,6 +12,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#ifdef MEM_STATS
 int64_t finalCount;
 int64_t peakCount;
 int64_t mallocCount;
@@ -25,6 +33,10 @@ void Free(void *ptr) {
 
     free(ptr);
 }
+#else
+#define Malloc(s) calloc(1, s)
+#define Free(p) free(p)
+#endif
 
 // ==================
 // TYPES
@@ -32,6 +44,7 @@ void Free(void *ptr) {
 
 typedef uint8_t byte;
 
+#define var(n) bind n = last++;
 typedef uint64_t bind;
 bind last;
 
@@ -75,6 +88,11 @@ struct expr {
 // ==================
 // UTILITY
 // ==================
+
+char *boolToStr(bool b) {
+    if(b) return "true";
+    else  return "false";
+}
 
 void freeExpr(expr *e);
 
@@ -134,10 +152,42 @@ expr mkFun(expr *body) {
 // EVALUATING
 // ==================
 
+void replaceBinds(expr *subst, bind old, bind new) {
+    if(false){}
+    else if(subst->type == EXPR_BIND) {
+        if(subst->bind == old) subst->bind = new;
+    }
+    else if(subst->type == EXPR_FUN) {
+        replaceBinds(subst->body, old, new);
+    }
+    else if(subst->type == EXPR_APP) {
+        replaceBinds(subst->lhs, old, new);
+        replaceBinds(subst->rhs, old, new);
+    }
+}
+
+void updateBinds(expr *subst) {
+    if(false){}
+    else if(subst->type == EXPR_FUN) {
+        var(newBind);
+        replaceBinds(subst->body, subst->arg, newBind);
+        subst->arg = newBind;
+        updateBinds(subst->body);
+    }
+    else if(subst->type == EXPR_APP) {
+        updateBinds(subst->lhs);
+        updateBinds(subst->rhs);
+    }
+}
+
 expr substitute(expr body, bind b, expr subst) {
     if(false) {}
     else if(body.type == EXPR_BIND) {
-        if(body.bind == b)  return cloneExprInPlace(&subst);
+        if(body.bind == b) {
+            subst = cloneExprInPlace(&subst);
+            updateBinds(&subst);
+            return subst;
+        }
         else                return cloneExprInPlace(&body);
     }
     else if(body.type == EXPR_FUN) {
@@ -211,10 +261,12 @@ expr _evaluate(expr f, bool *doneWork) {
     }
 }
 
+void printExpr(expr e);
 expr evaluate(expr f) {
     f = cloneExprInPlace(&f);
     bool doneWork;
     do {
+        // printExpr(f);
         doneWork = false;
         expr nf = _evaluate(f, &doneWork);
         if(doneWork) { 
@@ -245,10 +297,12 @@ char getVarName(bind b, size_t *lastTaken, bind binds[], char vars[]) {
 void _printExpr(expr e, size_t *lastTaken, bind binds[], char vars[], bool isRhs) {
     if(false) {}
     else if(e.type == EXPR_BIND) {
-        printf("%c", getVarName(e.bind, lastTaken, binds, vars));
+        printf("[%d]", e.bind);
+        // printf("%c", getVarName(e.bind, lastTaken, binds, vars));
     }
     else if(e.type == EXPR_FUN) {
-        printf("( λ%c.", getVarName(e.arg, lastTaken, binds, vars));
+        printf("λ[%d]", e.arg);
+        // printf("( λ%c.", getVarName(e.arg, lastTaken, binds, vars));
         _printExpr(*e.body, lastTaken, binds, vars, false);
         printf(" )");
     }
@@ -278,7 +332,6 @@ void printExpr(expr e) {
 // MACROS
 // ==================
 
-#define var(n) bind n = last++;
 
 #define Bind(bi) (expr){ .type = EXPR_BIND, .bind = (bi) };
 
@@ -301,16 +354,18 @@ void printExpr(expr e) {
 
 #define Fun(b, body) \
     {0}; \
-    var(b); \
     { \
-        expr __ftemp; \
+        var(b); \
         { \
-            expr temp = body; \
-            __ftemp = mkFun(&temp); \
+            expr __ftemp; \
+            { \
+                expr temp = body; \
+                    __ftemp = mkFun(&temp); \
+            } \
+            temp = __ftemp; \
         } \
-        temp = __ftemp; \
-    } \
-    temp.arg = b;
+        temp.arg = b; \
+    }
 
 #define Defun(fname, b, body) \
     expr fname; \
@@ -323,14 +378,29 @@ void printExpr(expr e) {
         } \
         __ftemp.arg = b; \
         fname = __ftemp; \
-    }
+    } \
+    fname = evaluate(fname);
+
+#define DefunLazy(fname, b, body) \
+    expr fname; \
+    { \
+        var(b); \
+        expr __ftemp; \
+        { \
+            expr temp = body; \
+            __ftemp = mkFun(&temp); \
+        } \
+        __ftemp.arg = b; \
+        fname = __ftemp; \
+    } \
 
 #define Defvar(vname, body) \
     expr vname; \
     { \
         expr temp = body; \
         vname = temp; \
-    }
+    } \
+    vname = evaluate(vname);
 
 #define DefunImpure(fname, argty, argname, body) \
     expr __##fname(byte *__##argname, size_t len) { \
@@ -341,7 +411,7 @@ void printExpr(expr e) {
         *__##argname = argname; \
         return (expr){ .type = EXPR_IMPURE_VAL, .valp = __##argname, .vall = sizeof(argty) }; \
     } \
-    expr fname = (expr){ .type = EXPR_IMPURE_FUN, .fun = __##fname };
+    expr fname = (expr){ .type = EXPR_IMPURE_FUN, .fun = __##fname }; \
 
 #define DefvarImpure(vname, vty, vval) \
     vty *__##vname = Malloc(sizeof(vty)); \
@@ -349,11 +419,16 @@ void printExpr(expr e) {
     expr vname = (expr){ .type = EXPR_IMPURE_VAL, .valp = (byte *)__##vname, .vall = sizeof(vty) }; \
 
 #define ReadVarImpure(var, ty) *(ty *)var.valp
-
         
 // ==================
 // USAGE
 // ==================
+
+expr __ImpureIdentity(byte *ptr, size_t len) {
+    byte *ret = Malloc(len);
+    memcpy(ret, ptr, len);
+    return (expr){ .type = EXPR_IMPURE_VAL, .valp = ret, .vall = len };
+}
 
 DefunImpure(ImpureIncrement, uint64_t, num, {
     num++;
@@ -361,46 +436,138 @@ DefunImpure(ImpureIncrement, uint64_t, num, {
 
 int main() {
 
-    Defun(True, x, Fun(y, Bind(x)));
-    Defun(False, x, Fun(y, Bind(y)));
-
-    Defun(Not, v, App(App(Bind(v), False), True));
-
-    Defun(And, a, Fun(b, App(App(Bind(a), Bind(b)), False)));
-    Defun(Or, a, Fun(b, App(App(Bind(a), True), Bind(b))));
-
+    // Zero and Successor
     Defun(Zero, s, Fun(z, Bind(z)));
     Defun(Succ, w, Fun(y, Fun(x, App(Bind(y), App(App(Bind(w), Bind(y)), Bind(x))))));
 
+    // Simple numbers
     Defvar(One, App(Succ, Zero));
     Defvar(Two, App(Succ, One));
     Defvar(Three, App(Succ, App(Succ, App(Succ, Zero))));
+    Defvar(Four, App(Succ, Three));
 
+    // Sum and Multiplication
+    Defun(Sum, x, Fun(y, App(App(Bind(x), Succ), Bind(y))));
+    Defun(Mul, x, Fun(y, Fun(z, App(Bind(x), App(Bind(y), Bind(z))))));
+
+    // More complicated numbers
+    Defvar(Five, App(App(Sum, Two), Three));
+    Defvar(Six, App(App(Sum, Three), Three));
+    Defvar(Twelve, App(App(Mul, Three), Four));
+    Defvar(Twenty, App(App(Mul, Five), Four));
+
+    // Booleans
+    Defun(True, x, Fun(y, Bind(x)));
+    Defun(False, x, Fun(y, Bind(y)));
+
+    // Boolean operations
+    Defun(And, x, Fun(y, App(App(Bind(x), Bind(y)), False)));
+    Defun(Or, x, Fun(y, App(App(Bind(x), True), Bind(y))));
+    Defun(Not, x, App(App(Bind(x), False), True));
+
+    Defun(IsZero, x, App(App(App(Bind(x), False), Not), False));
+
+    Defvar(ZeroIsZero, App(IsZero, Zero));
+    Defvar(TwoIsZero, App(IsZero, Two));
+
+    // Boolean operations examples
+    Defvar(BothZeroAndTwoAreZero, App(App(And, ZeroIsZero), TwoIsZero));
+    Defvar(EitherZeroOrTwoIsZero, App(App(Or, ZeroIsZero), TwoIsZero));
+
+    // Predecessor
+    Defun(PredAux, p, Fun(z, App(App(Bind(z), App(Succ, App(Bind(p), True))), App(Bind(p), True))));
+    Defun(Pred, n, App(App(App(Bind(n), PredAux), Fun(z, App(App(Bind(z), Zero), Zero))), False));
+
+    // Predecessor example
+    Defvar(Eleven, App(Pred, Twelve));
+
+    // Comparison
+    Defun(IsGreaterOrEqual, x, Fun(y, App(IsZero, App(App(Bind(x), Pred), Bind(y)))));
+    Defun(IsLess, x, Fun(y, App(Not, App(App(IsGreaterOrEqual, Bind(x)), Bind(y)))));
+    Defun(IsEqual, x, Fun(y, App(App(And, App(App(IsGreaterOrEqual, Bind(x)), Bind(y))), App(App(IsGreaterOrEqual, Bind(y)), Bind(x)))));
+    Defun(IsLessOrEqual, x, Fun(y, App(App(Or, App(App(IsLess, Bind(x)), Bind(y))), App(App(IsEqual, Bind(x)), Bind(y)))));
+    Defun(IsGreater, x, Fun(y, App(App(And, App(App(IsGreaterOrEqual, Bind(x)), Bind(y))), App(Not, App(App(IsEqual, Bind(x)), Bind(y))))));
+
+    // Comparison examples
+    Defvar(FiveGThree, App(App(IsGreater, Five), Three));
+    Defvar(TwoGThree, App(App(IsGreater, Two), Three));
+    Defvar(TwoLEFive, App(App(IsLessOrEqual, Two), Five));
+    Defvar(FiveLEFive, App(App(IsLessOrEqual, Five), Five));
+
+    // Recursive Y and Z combinators
+    DefunLazy(YC, y, App(Fun(x, App(Bind(y), App(Bind(x), Bind(x)))), Fun(x, App(Bind(y), App(Bind(x), Bind(x))))));
+    DefunLazy(ZC, f, App(Fun(x, App(Bind(f), Fun(v, App(App(Bind(x), Bind(x)), Bind(v))))), Fun(x, App(Bind(f), Fun(v, App(App(Bind(x), Bind(x)), Bind(v)))))));
+
+    // Sum via Y combinator
+    Defun(SumNatAux, r, Fun(n, App(App(App(IsZero, Bind(n)), Zero), App(App(Bind(n), Succ), App(Bind(r), App(Pred, Bind(n)))))));
+    DefunLazy(SumNat, n, App(App(YC, SumNatAux), Bind(n)));
+#if defined(SLOW) && defined(SLOW_SUMNAT)
+    Defvar(SumTwelve, App(SumNat, Twelve));
+#endif
+
+    // Factorial via Y combinator
+    Defun(FactAux, f, Fun(n, App(App(App(IsZero, Bind(n)), One), App(App(Mul, Bind(n)), App(Bind(f), App(Pred, Bind(n)))))));
+    DefunLazy(Fact, n, App(App(YC, FactAux), Bind(n)));
+#if defined(SLOW) && defined(SLOW_FACTORIAL)
+    Defvar(FactFive, App(Fact, Five));
+#endif
+
+    // Defining impure values for confirming results
     DefvarImpure(ImpureZero, uint64_t, 0);
-    Defvar(CheckThree, App(App(Three, ImpureIncrement), ImpureZero));
+    DefvarImpure(ImpureOne, uint64_t, 1);
+    Defvar(ImpureFalse, ImpureZero);
+    Defvar(ImpureTrue, ImpureOne);
 
-    expr checkThree = evaluate(CheckThree);
-    assert(checkThree.type == EXPR_IMPURE_VAL);
+    // Tests
+    Defun(CheckNumber, n, App(App(Bind(n), ImpureIncrement), ImpureZero));
+    Defun(CheckBool, b, App(App(Bind(b), ImpureTrue), ImpureFalse));
 
-    printExpr(CheckThree);
-    printExpr(checkThree);
+    Defvar(CheckTwenty, App(CheckNumber, Twenty));
+    printf("Twenty evaluates to: %d\n", ReadVarImpure(CheckTwenty, uint64_t));
     
-    evaluate(One);
+    Defvar(CheckFour, App(CheckNumber, Four));
+    printf("Four evaluates to: %d\n", ReadVarImpure(CheckFour, uint64_t));
 
-    printf("Three evaluates to: %d\n", ReadVarImpure(checkThree, uint64_t));
+    Defvar(CheckEleven, App(CheckNumber, Eleven));
+    printf("Eleven evaluates to: %d\n", ReadVarImpure(CheckEleven, uint64_t));
 
-    freeExprInPlace(True);
-    freeExprInPlace(False);
-    freeExprInPlace(Not);
-    freeExprInPlace(And);
-    freeExprInPlace(Or);
-    freeExprInPlace(Zero);
-    freeExprInPlace(Succ);
-    freeExprInPlace(One);
-    freeExprInPlace(Two);
-    freeExprInPlace(Three);
-    freeExprInPlace(CheckThree);
-    freeExprInPlace(checkThree);
+    Defvar(CheckZeroIsZero, App(CheckBool, ZeroIsZero));
+    printf("isZero(0) evaluates to: %s\n", boolToStr(ReadVarImpure(CheckZeroIsZero, bool)));
 
+    Defvar(CheckTwoIsZero, App(CheckBool, TwoIsZero));
+    printf("isZero(2) evaluates to: %s\n", boolToStr(ReadVarImpure(CheckTwoIsZero, bool)));
+
+    Defvar(CheckBothZeroAndTwoAreZero, App(CheckBool, BothZeroAndTwoAreZero));
+    printf("isZero(0) && isZero(2) evaluates to: %s\n", boolToStr(ReadVarImpure(CheckBothZeroAndTwoAreZero, bool)));
+
+    Defvar(CheckEitherZeroOrTwoIsZero, App(CheckBool, EitherZeroOrTwoIsZero));
+    printf("isZero(0) || isZero(2) evaluates to: %s\n", boolToStr(ReadVarImpure(CheckEitherZeroOrTwoIsZero, bool)));
+
+    Defvar(CheckFiveGThree, App(CheckBool, FiveGThree));
+    printf("5 > 3 evaluates to: %s\n", boolToStr(ReadVarImpure(CheckFiveGThree, bool)));
+
+    Defvar(CheckTwoGThree,  App(CheckBool, TwoGThree));
+    printf("2 > 3 evaluates to: %s\n", boolToStr(ReadVarImpure(CheckTwoGThree, bool)));
+
+    Defvar(CheckTwoLEFive,  App(CheckBool, TwoLEFive));
+    printf("2 <= 5 evaluates to: %s\n", boolToStr(ReadVarImpure(CheckTwoLEFive, bool)));
+
+    Defvar(CheckFiveLEFive, App(CheckBool, FiveLEFive));
+    printf("5 <= 5 evaluates to: %s\n", boolToStr(ReadVarImpure(CheckFiveLEFive, bool)));
+
+#if defined(SLOW) && defined(SLOW_SUMNAT)
+    Defvar(CheckSumTwelve, App(CheckNumber, SumTwelve));
+    printf("Sum of all numbers up to twelve evaluates to: %d\n", ReadVarImpure(CheckSumTwelve, uint64_t));
+#endif
+
+#if defined(SLOW) && defined(SLOW_FACTORIAL)
+    Defvar(CheckFactFive, App(CheckNumber, FactFive));
+    printf("Five factorial evaluates to: %d\n", ReadVarImpure(CheckFactFive, uint64_t));
+#endif
+
+#ifdef MEM_STATS
     printf("MALLOC: %d; FREE: %d; FINAL: %d; PEAK: %d\n", mallocCount, freeCount, finalCount, peakCount);
+#endif
+
+    return 0;
 }

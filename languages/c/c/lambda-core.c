@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <assert.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -70,9 +70,9 @@ void Free(void *ptr) {
 
 typedef uint8_t byte;
 
-#define var(n) bind n = last++;
-typedef uint64_t bind;
-bind last;
+typedef uint64_t bind_t_;
+#define var(n) bind_t_ n = last++;
+bind_t_ last;
 
 typedef uint8_t expr_type;
 #define EXPR_BIND 0
@@ -87,11 +87,11 @@ struct expr {
     expr_type type;
     union {
         struct {
-            bind bind;
+            bind_t_ bind;
         };
 
         struct {
-            bind arg;
+            bind_t_ arg;
             expr *body;
         };
 
@@ -178,7 +178,7 @@ expr mkFun(expr *body) {
 // EVALUATING
 // ==================
 
-void replaceBinds(expr *subst, bind old, bind new) {
+void replaceBinds(expr *subst, bind_t_ old, bind_t_ new) {
     if(false){}
     else if(subst->type == EXPR_BIND) {
         if(subst->bind == old) subst->bind = new;
@@ -206,7 +206,7 @@ void updateBinds(expr *subst) {
     }
 }
 
-expr substitute(expr body, bind b, expr subst) {
+expr substitute(expr body, bind_t_ b, expr subst) {
     if(false) {}
     else if(body.type == EXPR_BIND) {
         if(body.bind == b) {
@@ -239,10 +239,17 @@ expr substitute(expr body, bind b, expr subst) {
     else if(body.type == EXPR_IMPURE_FUN) {
         return cloneExprInPlace(&body);
     }
+    else {
+        printf("Invalid expression type: %d, line: %d\n", body.type, __LINE__);
+        exit(1);
+    }
 }
 
 expr apply(expr f, expr e) {
-    assert(f.type == EXPR_FUN || (f.type == EXPR_IMPURE_FUN && e.type == EXPR_IMPURE_VAL));
+    if(!(f.type == EXPR_FUN || (f.type == EXPR_IMPURE_FUN && e.type == EXPR_IMPURE_VAL))) {
+        printf("Tried to apply unapplicable types: %d and %d, line: %d\n", f.type, e.type, __LINE__);
+        exit(1);
+    }
 
     if(f.type == EXPR_FUN) {
         expr result = substitute(*f.body, f.arg, e);
@@ -309,7 +316,7 @@ expr evaluate(expr f) {
 // PRINTING
 // ==================
 
-char getVarName(bind b, size_t *lastTaken, bind binds[], char vars[]) {
+char getVarName(bind_t_ b, size_t *lastTaken, bind_t_ binds[], char vars[]) {
     for(int i = 0; i < *lastTaken; i++) {
         if(binds[i] == b) return vars[i];
     }
@@ -319,15 +326,13 @@ char getVarName(bind b, size_t *lastTaken, bind binds[], char vars[]) {
     return vars[*lastTaken - 1];
 }
 
-void _printExpr(expr e, size_t *lastTaken, bind binds[], char vars[], bool isRhs) {
+void _printExpr(expr e, size_t *lastTaken, bind_t_ binds[], char vars[], bool isRhs) {
     if(false) {}
     else if(e.type == EXPR_BIND) {
-        printf("[%d]", e.bind);
-        // printf("%c", getVarName(e.bind, lastTaken, binds, vars));
+        printf("%c", getVarName(e.bind, lastTaken, binds, vars));
     }
     else if(e.type == EXPR_FUN) {
-        printf("λ[%d]", e.arg);
-        // printf("( λ%c.", getVarName(e.arg, lastTaken, binds, vars));
+        printf("( λ%c.", getVarName(e.arg, lastTaken, binds, vars));
         _printExpr(*e.body, lastTaken, binds, vars, false);
         printf(" )");
     }
@@ -338,7 +343,7 @@ void _printExpr(expr e, size_t *lastTaken, bind binds[], char vars[], bool isRhs
         if(isRhs) printf(")");
     }
     else if(e.type == EXPR_IMPURE_VAL) {
-        printf("[%d bytes]", e.vall);
+        printf("[%lu bytes]", e.vall);
     }
     else if(e.type == EXPR_IMPURE_FUN) {
         printf("<fun>");
@@ -346,7 +351,7 @@ void _printExpr(expr e, size_t *lastTaken, bind binds[], char vars[], bool isRhs
 }
 
 void printExpr(expr e) {
-    bind binds[52] = {0};
+    bind_t_ binds[52] = {0};
     char vars[52] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     size_t lastTaken = 0;
     _printExpr(e, &lastTaken, binds, vars, false);
@@ -428,7 +433,10 @@ void printExpr(expr e) {
 
 #define DefunImpure(fname, argty, argname, body) \
     expr __##fname(byte *__##argname, size_t len) { \
-        assert(len == sizeof(argty)); \
+        if(!(len == sizeof(argty))) { \
+            printf("Unexpected arg length in impure function. Expected: %lu, Actual: %lu, line: %d\n", sizeof(argty), len, __LINE__); \
+            exit(1); \
+        } \
         argty argname = *(argty *)__##argname; \
         body; \
         __##argname = Malloc(sizeof(argty)); \
@@ -547,13 +555,13 @@ int main() {
     Defun(CheckBool, b, App(App(Bind(b), ImpureTrue), ImpureFalse));
 
     Defvar(CheckTwenty, App(CheckNumber, Twenty));
-    printf("Twenty evaluates to: %d\n", ReadVarImpure(CheckTwenty, uint64_t));
+    printf("Twenty evaluates to: %lu\n", ReadVarImpure(CheckTwenty, uint64_t));
     
     Defvar(CheckFour, App(CheckNumber, Four));
-    printf("Four evaluates to: %d\n", ReadVarImpure(CheckFour, uint64_t));
+    printf("Four evaluates to: %lu\n", ReadVarImpure(CheckFour, uint64_t));
 
     Defvar(CheckEleven, App(CheckNumber, Eleven));
-    printf("Eleven evaluates to: %d\n", ReadVarImpure(CheckEleven, uint64_t));
+    printf("Eleven evaluates to: %lu\n", ReadVarImpure(CheckEleven, uint64_t));
 
     Defvar(CheckZeroIsZero, App(CheckBool, ZeroIsZero));
     printf("isZero(0) evaluates to: %s\n", boolToStr(ReadVarImpure(CheckZeroIsZero, bool)));
@@ -581,16 +589,16 @@ int main() {
 
 #if defined(SLOW) && defined(SLOW_SUMNAT)
     Defvar(CheckSumTwelve, App(CheckNumber, SumTwelve));
-    printf("Sum of all numbers up to twelve evaluates to: %d\n", ReadVarImpure(CheckSumTwelve, uint64_t));
+    printf("Sum of all numbers up to twelve evaluates to: %lu\n", ReadVarImpure(CheckSumTwelve, uint64_t));
 #endif
 
 #if defined(SLOW) && defined(SLOW_FACTORIAL)
     Defvar(CheckFactFive, App(CheckNumber, FactFive));
-    printf("Five factorial evaluates to: %d\n", ReadVarImpure(CheckFactFive, uint64_t));
+    printf("Five factorial evaluates to: %lu\n", ReadVarImpure(CheckFactFive, uint64_t));
 #endif
 
 #ifdef MEM_STATS
-    printf("MALLOC: %d; FREE: %d; FINAL: %d; PEAK: %d\n", mallocCount, freeCount, finalCount, peakCount);
+    printf("MALLOC: %ld; FREE: %ld; FINAL: %ld; PEAK: %ld\n", mallocCount, freeCount, finalCount, peakCount);
 #endif
 
     return 0;

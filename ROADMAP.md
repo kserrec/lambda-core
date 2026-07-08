@@ -15,7 +15,7 @@ Folders without a `test.sh` are skipped until backfilled.
 - [x] **Step 1 — harness + locally verifiable languages.** Workflow file,
       `run-tests.sh`, and test.sh/expected-output.txt for Python, JavaScript,
       TypeScript (Bun), Perl, Racket, and C. All six verified locally.
-- [ ] **Step 2 — C++ and Go.** C++ needs GCC 14 (`<print>` header) — not on
+- [x] **Step 2 — C++ and Go.** C++ needs GCC 14 (`<print>` header) — not on
       the dev machine, so capture its output from the CI runner log on the PR,
       then commit it as the expected file. Go is preinstalled on runners.
 - [ ] **Step 3 — Ruby, Lua, Haskell.** All installable on the runner via apt

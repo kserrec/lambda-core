@@ -1,0 +1,23 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Python, Node.js, Perl, GCC/G++ 14 come preinstalled on the runner.
+      - name: Install toolchains not preinstalled on the runner
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends racket
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Run all language tests
+        run: ./run-tests.sh

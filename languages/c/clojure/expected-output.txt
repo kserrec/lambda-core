@@ -1,0 +1,65 @@
+
+Testing numerals-test
+("numeral expressions") = (toInt ((minus ((mult (fromInt 3)) ((plus (fromInt 2)) (fromInt 5)))) ((exp (fromInt 2)) (fromInt 3)))) => 13
+("addition") = (toInt ((plus (fromInt 7)) (fromInt 5))) => 12
+("addition") = (toInt ((plus (fromInt 7)) ((plus (fromInt 6)) (fromInt 2)))) => 15
+("subtraction") = (toInt ((minus (fromInt 7)) (fromInt 5))) => 2
+("subtraction") = (toInt ((minus (fromInt 7)) ((minus (fromInt 6)) (fromInt 2)))) => 3
+("multiplication") = (toInt ((mult (fromInt 2)) (fromInt 3))) => 6
+("multiplication") = (toInt ((mult (fromInt 2)) ((mult (fromInt 5)) (fromInt 3)))) => 30
+("exponentiation") = (toInt ((exp (fromInt 2)) (fromInt 3))) => 8
+("exponentiation") = (toInt ((exp (fromInt 2)) ((exp (fromInt 2)) (fromInt 3)))) => 256
+("zero") = (toInt zero) => 0
+("one") = (toInt (succ zero)) => 1
+("one") = (toInt one) => 1
+("two") = (toInt (succ (succ zero))) => 2
+("two") = (toInt two) => 2
+("three") = (toInt (succ (succ (succ zero)))) => 3
+("predecessor") = (toInt (pred one)) => 0
+("predecessor") = (toInt (pred two)) => 1
+("predecessor") = (toInt (pred (succ (succ (succ zero))))) => 2
+("predecessor") = (toInt (pred (fromInt 10))) => 9
+("toStr") = (toStr zero) => "λf.λn.(n)"
+("toStr") = (toStr one) => "λf.λn.(f(n))"
+("toStr") = (toStr two) => "λf.λn.(f(f(n)))"
+("toStr") = (toStr (succ (succ (succ zero)))) => "λf.λn.(f(f(f(n))))"
+("toStr") = (toStr (fromInt 5)) => "λf.λn.(f(f(f(f(f(n))))))"
+
+Testing booleans-test
+("true") = (toBoolean T) => true
+("false") = (toBoolean F) => false
+("If") = (toBoolean (((If T) T) F)) => true
+("If") = (toBoolean (((If F) T) F)) => false
+("And") = (toBoolean ((And T) T)) => true
+("And") = (toBoolean ((And T) F)) => false
+("And") = (toBoolean ((And F) T)) => false
+("And") = (toBoolean ((And F) F)) => false
+("And") = (toBoolean ((And T) ((And T) T))) => true
+("And") = (toBoolean ((And T) ((And F) T))) => false
+("Or") = (toBoolean ((Or T) T)) => true
+("Or") = (toBoolean ((Or T) F)) => true
+("Or") = (toBoolean ((Or F) T)) => true
+("Or") = (toBoolean ((Or F) F)) => false
+("Or") = (toBoolean ((Or F) ((Or F) F))) => false
+("Or") = (toBoolean ((Or F) ((Or T) F))) => true
+("Not") = (toBoolean (Not T)) => false
+("Not") = (toBoolean (Not F)) => true
+("Not") = (toBoolean (Not (Not T))) => true
+("Not") = (toBoolean (Not (Not F))) => false
+("Xor") = (toBoolean ((Xor T) T)) => false
+("Xor") = (toBoolean ((Xor T) F)) => true
+("Xor") = (toBoolean ((Xor F) T)) => true
+("Xor") = (toBoolean ((Xor F) F)) => false
+("Expressions") = (toBoolean ((And T) ((And T) ((Or F) T)))) => true
+("Expressions") = (toBoolean ((And T) ((And F) ((Or F) ((And T) T))))) => false
+("Expressions") = (toBoolean ((Or T) ((And F) ((Or F) ((And T) T))))) => true
+("Expressions") = (toBoolean ((Or F) ((And F) ((Or F) ((And F) T))))) => false
+("Expressions") = (toBoolean ((And ((Or F) F)) ((And T) ((Or F) T)))) => false
+("Expressions") = (toBoolean ((And ((Or T) F)) ((And T) ((Or F) T)))) => true
+
+Testing combinators-test
+("Z-factorial") = (toInt (Z-factorial (fromInt 9) one)) => 362880
+("Y-factorial") = (toInt (Y-factorial (fromInt 9) one)) => 362880
+
+Ran 7 tests containing 56 assertions.
+0 failures, 0 errors.

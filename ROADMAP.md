@@ -28,9 +28,10 @@ Folders without a `test.sh` are skipped until backfilled.
       lambda-core.fsx`, and `cd lambda-core && clj -M:test` for Clojure's
       deps.edn test runner). Workflow installs `ocaml`+`elixir` via apt and the
       Clojure CLI via its official installer; F# uses the runner's preinstalled
-      dotnet. OCaml + Elixir captured and PASSing locally. Remaining: capture
-      F# (dotnet) and Clojure (clj CLI) `expected-output.txt` from the CI log —
-      both are fiddly local installs, so use the C++ pattern instead.
+      dotnet. OCaml + Elixir captured locally; F# captured from the CI log (PR
+      #31). Remaining: Clojure — the first CI run showed `clj` (the interactive
+      rlwrap wrapper) printing a notice instead of running; switched test.sh to
+      `clojure -M:test`, capture from the next CI run.
 - [ ] **Step 5 — Java and Kotlin.** Java: PR #29 (the `java` branch) fixes the
       numeral typing so PRED works; add test.sh + expected output to that
       branch, let CI validate it, then merge #29. Kotlin: runner has a JDK;

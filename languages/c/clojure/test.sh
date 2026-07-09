@@ -1,2 +1,4 @@
 # The Clojure impl is a deps.edn project with its own clojure.test runner.
-cd lambda-core && clj -M:test
+# Use `clojure`, not `clj`: `clj` is the interactive rlwrap wrapper and prints
+# an "install rlwrap / use clojure instead" notice when run non-interactively.
+cd lambda-core && clojure -M:test

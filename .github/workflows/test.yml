@@ -11,11 +11,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Python, Node.js, Perl, GCC/G++ 14 come preinstalled on the runner.
+      # Python, Node.js, Perl, GCC/G++ 14, and the .NET SDK (F#) come
+      # preinstalled on the runner.
       - name: Install toolchains not preinstalled on the runner
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends racket ruby lua5.4 ghc
+          sudo apt-get install -y --no-install-recommends \
+            racket ruby lua5.4 ghc ocaml elixir
+
+      # Clojure's deps.edn CLI (clj) is not in apt; use the official installer.
+      - name: Install Clojure CLI
+        run: |
+          curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
+          chmod +x linux-install.sh
+          sudo ./linux-install.sh
 
       - uses: oven-sh/setup-bun@v2
 

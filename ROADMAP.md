@@ -23,9 +23,14 @@ Folders without a `test.sh` are skipped until backfilled.
       the apt installs (`ruby lua5.4 ghc`) added to the workflow, and each
       folder's `expected-output.txt` captured from a real local run. All three
       PASS locally.
-- [ ] **Step 4 — OCaml, Elixir, Clojure, F#.** apt/preinstalled on runners
-      (`ocaml`, `elixir`, `clojure`; F# via preinstalled dotnet). Clojure runs
-      through its own deps.edn test runner — wrap it in test.sh.
+- [~] **Step 4 — OCaml, Elixir, Clojure, F#.** `test.sh` added for all four
+      (`ocaml lambda_core.ml`, `elixir lambda-core.exs`, `dotnet fsi
+      lambda-core.fsx`, and `cd lambda-core && clj -M:test` for Clojure's
+      deps.edn test runner). Workflow installs `ocaml`+`elixir` via apt and the
+      Clojure CLI via its official installer; F# uses the runner's preinstalled
+      dotnet. OCaml + Elixir captured and PASSing locally. Remaining: capture
+      F# (dotnet) and Clojure (clj CLI) `expected-output.txt` from the CI log —
+      both are fiddly local installs, so use the C++ pattern instead.
 - [ ] **Step 5 — Java and Kotlin.** Java: PR #29 (the `java` branch) fixes the
       numeral typing so PRED works; add test.sh + expected output to that
       branch, let CI validate it, then merge #29. Kotlin: runner has a JDK;

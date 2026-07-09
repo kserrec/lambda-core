@@ -18,8 +18,11 @@ Folders without a `test.sh` are skipped until backfilled.
 - [x] **Step 2 — C++ and Go.** C++ needs GCC 14 (`<print>` header) — not on
       the dev machine, so capture its output from the CI runner log on the PR,
       then commit it as the expected file. Go is preinstalled on runners.
-- [ ] **Step 3 — Ruby, Lua, Haskell.** All installable on the runner via apt
-      (`ruby`, `lua5.4`, `ghc`); add installs to the workflow's toolchain step.
+- [x] **Step 3 — Ruby, Lua, Haskell.** `test.sh` added for all three
+      (`ruby lambda-core.rb`, `lua5.4 lambda-core.lua`, `runghc lambda-core.hs`),
+      the apt installs (`ruby lua5.4 ghc`) added to the workflow, and each
+      folder's `expected-output.txt` captured from a real local run. All three
+      PASS locally.
 - [ ] **Step 4 — OCaml, Elixir, Clojure, F#.** apt/preinstalled on runners
       (`ocaml`, `elixir`, `clojure`; F# via preinstalled dotnet). Clojure runs
       through its own deps.edn test runner — wrap it in test.sh.

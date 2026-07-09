@@ -15,7 +15,7 @@ jobs:
       - name: Install toolchains not preinstalled on the runner
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends racket
+          sudo apt-get install -y --no-install-recommends racket ruby lua5.4 ghc
 
       - uses: oven-sh/setup-bun@v2
 

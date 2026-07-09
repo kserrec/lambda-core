@@ -15,14 +15,22 @@ Folders without a `test.sh` are skipped until backfilled.
 - [x] **Step 1 — harness + locally verifiable languages.** Workflow file,
       `run-tests.sh`, and test.sh/expected-output.txt for Python, JavaScript,
       TypeScript (Bun), Perl, Racket, and C. All six verified locally.
-- [ ] **Step 2 — C++ and Go.** C++ needs GCC 14 (`<print>` header) — not on
+- [x] **Step 2 — C++ and Go.** C++ needs GCC 14 (`<print>` header) — not on
       the dev machine, so capture its output from the CI runner log on the PR,
       then commit it as the expected file. Go is preinstalled on runners.
-- [ ] **Step 3 — Ruby, Lua, Haskell.** All installable on the runner via apt
-      (`ruby`, `lua5.4`, `ghc`); add installs to the workflow's toolchain step.
-- [ ] **Step 4 — OCaml, Elixir, Clojure, F#.** apt/preinstalled on runners
-      (`ocaml`, `elixir`, `clojure`; F# via preinstalled dotnet). Clojure runs
-      through its own deps.edn test runner — wrap it in test.sh.
+- [x] **Step 3 — Ruby, Lua, Haskell.** `test.sh` added for all three
+      (`ruby lambda-core.rb`, `lua5.4 lambda-core.lua`, `runghc lambda-core.hs`),
+      the apt installs (`ruby lua5.4 ghc`) added to the workflow, and each
+      folder's `expected-output.txt` captured from a real local run. All three
+      PASS locally.
+- [x] **Step 4 — OCaml, Elixir, Clojure, F#.** `test.sh` for all four
+      (`ocaml lambda_core.ml`, `elixir lambda-core.exs`, `dotnet fsi
+      lambda-core.fsx`, and `cd lambda-core && clojure -M:test` for Clojure's
+      deps.edn test runner). Workflow installs `ocaml`+`elixir` via apt and the
+      Clojure CLI via its official installer; F# uses the runner's preinstalled
+      dotnet. OCaml + Elixir captured locally; F# and Clojure captured from the
+      CI log (PR #31). Clojure uses `clojure`, not the interactive `clj` wrapper
+      (which printed an rlwrap notice instead of running). All four green on CI.
 - [ ] **Step 5 — Java and Kotlin.** Java: PR #29 (the `java` branch) fixes the
       numeral typing so PRED works; add test.sh + expected output to that
       branch, let CI validate it, then merge #29. Kotlin: runner has a JDK;

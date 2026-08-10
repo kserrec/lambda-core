@@ -45,6 +45,16 @@ Folders without a `test.sh` are skipped until backfilled.
       test.sh + expected-output.txt in new-language PRs, and enable branch
       protection so PRs need a green check to merge.
 
+## Milestone 1.5 — native browser experiment
+
+- [x] **Step 1 — HTML + CSS, with no JavaScript.** A self-contained HTML
+      document that encodes Church-boolean selection trees and observes Church
+      numeral application through CSS counters. Use no JavaScript, SVG,
+      external resources, or non-native browser extensions. Render it in a real
+      browser for the regression test and capture the baseline only from that
+      observed rendering. Verified in headless Google Chrome; the root harness
+      reports `PASS h/html-css`.
+
 ## Milestone 2 — fill out the missing major languages
 
 One language per step, each landing as its own PR with implementation, README,

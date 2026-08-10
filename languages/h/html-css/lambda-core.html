@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; style-src 'unsafe-inline'">
+  <title>Lambda Core in HTML + CSS</title>
+  <style>
+    @page {
+      margin: 0;
+      size: 4in 8in;
+    }
+
+    body {
+      margin: 0;
+      color: #000;
+      background: #fff;
+      font: 16px/1.25 monospace;
+    }
+
+    lc-output,
+    lc-number {
+      display: block;
+    }
+
+    /* Church TRUE selects its first argument; FALSE selects its second. */
+    lc-true,
+    lc-false,
+    lc-not,
+    lc-and,
+    lc-or {
+      display: contents;
+    }
+
+    lc-true > :nth-child(2),
+    lc-false > :first-child {
+      display: none;
+    }
+
+    /*
+     * Applying a Church numeral to counter-increment records how many times
+     * the numeral invokes its function. ZERO contributes no successor;
+     * SUCC contributes one. PRED suppresses exactly the outermost SUCC, and
+     * therefore leaves ZERO at zero.
+     */
+    lc-number {
+      counter-reset: church 0;
+    }
+
+    lc-number lc-succ {
+      counter-increment: church 1;
+    }
+
+    lc-number lc-pred > lc-succ {
+      counter-increment: none;
+    }
+
+    lc-number::after {
+      content: counter(church);
+    }
+
+    lc-zero,
+    lc-succ,
+    lc-pred {
+      display: inline;
+    }
+  </style>
+</head>
+<body>
+  <!-- TRUE and FALSE, each applied to the two printable branches. -->
+  <lc-output>
+    <lc-true>
+      <span>BOOLEAN TRUE</span>
+      <span>BOOLEAN FALSE</span>
+    </lc-true>
+  </lc-output>
+  <lc-output>
+    <lc-false>
+      <span>BOOLEAN TRUE</span>
+      <span>BOOLEAN FALSE</span>
+    </lc-false>
+  </lc-output>
+
+  <!-- NOT b = b FALSE TRUE. -->
+  <lc-output>
+    <lc-not>
+      <lc-true>
+        <lc-false>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-false>
+        <lc-true>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-true>
+      </lc-true>
+    </lc-not>
+  </lc-output>
+  <lc-output>
+    <lc-not>
+      <lc-false>
+        <lc-false>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-false>
+        <lc-true>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-true>
+      </lc-false>
+    </lc-not>
+  </lc-output>
+
+  <!-- AND b1 b2 = b1 b2 FALSE. -->
+  <lc-output>
+    <lc-and>
+      <lc-false>
+        <lc-false>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-false>
+        <lc-false>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-false>
+      </lc-false>
+    </lc-and>
+  </lc-output>
+  <lc-output>
+    <lc-and>
+      <lc-true>
+        <lc-false>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-false>
+        <lc-false>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-false>
+      </lc-true>
+    </lc-and>
+  </lc-output>
+  <lc-output>
+    <lc-and>
+      <lc-false>
+        <lc-true>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-true>
+        <lc-false>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-false>
+      </lc-false>
+    </lc-and>
+  </lc-output>
+  <lc-output>
+    <lc-and>
+      <lc-true>
+        <lc-true>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-true>
+        <lc-false>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-false>
+      </lc-true>
+    </lc-and>
+  </lc-output>
+
+  <!-- OR b1 b2 = b1 TRUE b2. -->
+  <lc-output>
+    <lc-or>
+      <lc-false>
+        <lc-true>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-true>
+        <lc-false>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-false>
+      </lc-false>
+    </lc-or>
+  </lc-output>
+  <lc-output>
+    <lc-or>
+      <lc-true>
+        <lc-true>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-true>
+        <lc-false>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-false>
+      </lc-true>
+    </lc-or>
+  </lc-output>
+  <lc-output>
+    <lc-or>
+      <lc-false>
+        <lc-true>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-true>
+        <lc-true>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-true>
+      </lc-false>
+    </lc-or>
+  </lc-output>
+  <lc-output>
+    <lc-or>
+      <lc-true>
+        <lc-true>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-true>
+        <lc-true>
+          <span>BOOLEAN TRUE</span>
+          <span>BOOLEAN FALSE</span>
+        </lc-true>
+      </lc-true>
+    </lc-or>
+  </lc-output>
+
+  <!-- ZERO, ONE = SUCC ZERO, and TWO = SUCC ONE. -->
+  <lc-number><lc-zero></lc-zero></lc-number>
+  <lc-number><lc-succ><lc-zero></lc-zero></lc-succ></lc-number>
+  <lc-number>
+    <lc-succ><lc-succ><lc-zero></lc-zero></lc-succ></lc-succ>
+  </lc-number>
+
+  <!-- PRED (SUCC ONE), PRED ONE, and PRED ZERO. -->
+  <lc-number>
+    <lc-pred>
+      <lc-succ><lc-succ><lc-zero></lc-zero></lc-succ></lc-succ>
+    </lc-pred>
+  </lc-number>
+  <lc-number>
+    <lc-pred><lc-succ><lc-zero></lc-zero></lc-succ></lc-pred>
+  </lc-number>
+  <lc-number><lc-pred><lc-zero></lc-zero></lc-pred></lc-number>
+</body>
+</html>

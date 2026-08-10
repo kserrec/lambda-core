@@ -11,13 +11,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Python, Node.js, Perl, GCC/G++ 14, and the .NET SDK (F#) come
-      # preinstalled on the runner.
+      # Python, Node.js, Perl, GCC/G++ 14, the .NET SDK (F#), and Google
+      # Chrome come preinstalled on the runner. poppler-utils supplies
+      # pdftotext, which observes the HTML+CSS implementation's rendering.
       - name: Install toolchains not preinstalled on the runner
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            racket ruby lua5.4 ghc ocaml elixir
+            racket ruby lua5.4 ghc ocaml elixir poppler-utils
 
       # Clojure's deps.edn CLI (clj) is not in apt; use the official installer.
       - name: Install Clojure CLI

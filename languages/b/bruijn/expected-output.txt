@@ -1,0 +1,15 @@
+ OK  test passed: (¬‣ true) = false
+ OK  test passed: (¬‣ false) = true
+ OK  test passed: (true ⋀ true) = true
+ OK  test passed: (true ⋀ false) = false
+ OK  test passed: (false ⋀ true) = false
+ OK  test passed: (false ⋀ false) = false
+ OK  test passed: (true ⋁ true) = true
+ OK  test passed: (true ⋁ false) = true
+ OK  test passed: (false ⋁ true) = true
+ OK  test passed: (false ⋁ false) = false
+ OK  test passed: (++‣ (++‣ zero)) = [[(1 (1 0))]]
+ OK  test passed: (--‣ (++‣ zero)) = zero
+ OK  test passed: (--‣ [[(1 (1 0))]]) = [[(1 0)]]
+ OK  test passed: (--‣ [[(1 (1 (1 0)))]]) = [[(1 (1 0))]]
+*> [0]

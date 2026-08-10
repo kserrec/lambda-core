@@ -35,10 +35,13 @@ Folders without a `test.sh` are skipped until backfilled.
       numeral typing so PRED works; add test.sh + expected output to that
       branch, let CI validate it, then merge #29. Kotlin: runner has a JDK;
       install kotlinc in the workflow.
-- [ ] **Step 6 — exotic languages: ArkScript, FatScript, bruijn, Language 84.**
-      Each needs its own toolchain acquisition (GitHub releases, cargo/stack
-      installs, or building from source). If one is genuinely unobtainable in
-      CI, document that in its folder instead of leaving it silently untested.
+- [x] **Step 6 — exotic languages: ArkScript, FatScript, bruijn, Language 84.**
+      ArkScript uses the checksum-verified official 4.7.1 archive; FatScript
+      uses its official 4.5.0 image pinned by digest in a read-only,
+      network-disabled container; bruijn is built from a pinned upstream commit
+      and locked Stack snapshot, then cached as a relocatable bundle; Language
+      84 uses the checksum-verified official 0.8 source and its documented Clang
+      build. All four expected-output baselines came from observed runs.
 - [ ] **Step 7 — flip the default and update the front door.** Once all
       folders have tests: make `run-tests.sh` fail on folders *missing* a
       test.sh, update README contribution instructions to require

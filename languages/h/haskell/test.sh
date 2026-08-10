@@ -1,0 +1,1 @@
+runghc lambda-core.hs

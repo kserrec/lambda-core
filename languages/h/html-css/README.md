@@ -9,6 +9,9 @@ Policy in the document prevents external resources from loading.
 
 The HTML is the expression tree and the CSS is the evaluator.
 
+For a complete, beginner-friendly tour of every moving part, read
+[HOW-IT-WORKS.md](HOW-IT-WORKS.md).
+
 - `lc-true` displays its first child and suppresses its second; `lc-false` does
   the reverse. The examples expand the actual Church definitions `NOT b = b
   FALSE TRUE`, `AND b1 b2 = b1 b2 FALSE`, and `OR b1 b2 = b1 TRUE b2` into

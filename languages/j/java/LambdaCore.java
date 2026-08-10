@@ -11,7 +11,10 @@ public interface LambdaCore {
     interface BinaryBoolOp extends Function<Bool, Function<Bool, Bool>> {
     }
 
-    interface ChurchNumeral extends Function<Function<Integer, Integer>, Function<Integer, Integer>> {
+    // PRED applies a numeral to functions over functions, so numerals cannot be
+    // pinned to Function<Integer, Integer>. Term is the untyped lambda calculus'
+    // single universal type: everything is a function from Term to Term.
+    interface Term extends Function<Term, Term> {
     }
 
     Bool TRUE = x -> y -> x;
@@ -21,13 +24,13 @@ public interface LambdaCore {
     BinaryBoolOp AND = b1 -> b2 -> b1.apply(b2).apply(FALSE);
     BinaryBoolOp OR = b1 -> b2 -> b1.apply(TRUE).apply(b2);
 
-    ChurchNumeral ZERO = x -> y -> y;
-    Function<ChurchNumeral, ChurchNumeral> SUCC = w -> y -> x -> y.apply(w.apply(y).apply(x));
-
-//    Function<ChurchNumeral, ChurchNumeral> PRED = n -> f -> x ->
-//            n.apply(g -> h -> h.apply(g.apply(f)))
-//                    .apply(u -> x)
-//                    .apply(u -> u);
+    Term ZERO = f -> x -> x;
+    Term SUCC = n -> f -> x -> f.apply(n.apply(f).apply(x));
+    Term PRED = n -> f -> x ->
+            n.apply(g -> h -> h.apply(g.apply(f)))
+                    .apply(u -> x)
+                    .apply(u -> u);
+    Term ONE = SUCC.apply(ZERO);
 
     static void main(String[] args) {
         printBool(TRUE);                                // TRUE
@@ -47,7 +50,11 @@ public interface LambdaCore {
         printBool(OR.apply(TRUE).apply(TRUE));          // TRUE
 
         printChurchNumeral(ZERO);                       // 0
-        printChurchNumeral(SUCC.apply(ZERO));           // 1
+        printChurchNumeral(ONE);                        // 1
+        printChurchNumeral(SUCC.apply(ONE));            // 2
+        printChurchNumeral(PRED.apply(SUCC.apply(ONE))); // 1
+        printChurchNumeral(PRED.apply(ONE));            // 0
+        printChurchNumeral(PRED.apply(ZERO));           // 0
     }
 
     static void printBool(Bool b) {
@@ -59,7 +66,13 @@ public interface LambdaCore {
             throw new IllegalStateException();
     }
 
-    static void printChurchNumeral(ChurchNumeral n) {
-        System.out.println(n.apply(x -> x + 1).apply(0));
+    static void printChurchNumeral(Term n) {
+        int[] count = {0};
+        Term inc = t -> {
+            count[0]++;
+            return t;
+        };
+        n.apply(inc).apply(t -> t);
+        System.out.println(count[0]);
     }
 }

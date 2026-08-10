@@ -50,6 +50,9 @@ Folders without a `test.sh` are skipped until backfilled.
 One language per step, each landing as its own PR with implementation, README,
 test.sh, and expected output, CI-green before merge. Order roughly by reach:
 
+- [x] Bash — function names stand in for higher-order values; the complete
+      boolean truth tables and `ZERO`/`SUCC`/`PRED` numeral examples pass the
+      focused test and root harness locally.
 - [ ] Rust
 - [ ] C#
 - [ ] Swift

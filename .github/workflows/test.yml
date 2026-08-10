@@ -11,8 +11,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Python, Node.js, Perl, GCC/G++ 14, and the .NET SDK (F#) come
-      # preinstalled on the runner.
+      # Python, Node.js, Perl, GCC/G++ 14, Clang, Stack, Docker, and the
+      # .NET SDK (F#) come preinstalled on the runner.
       - name: Install toolchains not preinstalled on the runner
         run: |
           sudo apt-get update
@@ -27,6 +27,17 @@ jobs:
           sudo ./linux-install.sh
 
       - uses: oven-sh/setup-bun@v2
+
+      # Bruijn has no release binary. Cache only the finished, relocatable
+      # interpreter bundle; the source and all build dependencies remain pinned.
+      - name: Cache built Bruijn interpreter
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/bruijn-tool-v1.tar.gz
+          key: bruijn-${{ runner.os }}-${{ runner.arch }}-9f1ac885-lts-22.12-v1
+
+      - name: Install exotic language toolchains
+        run: .github/scripts/install-exotic-toolchains.sh
 
       - name: Run all language tests
         run: ./run-tests.sh

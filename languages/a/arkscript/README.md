@@ -1,26 +1,26 @@
 # ArkScript
 
-Running this solution requires either ArkScript 4.0.0 or a pre-release of ArkScript 4.0.0.
+This implementation runs on ArkScript 4.
 
-## Running the solution (docker)
+GitHub Actions downloads the official ArkScript 4.7.1 Linux archive and
+verifies its SHA-256 digest before running the program. For another platform,
+use the matching archive from the
+[official ArkScript releases](https://github.com/ArkScript-lang/Ark/releases).
+Keep the interpreter and its supplied libraries together when extracting it.
 
-```
-docker pull arkscript/nightly:latest
-docker run -it --rm -v $(pwd):/tmp:ro arkscript/nightly /tmp/lambda-core.ark
-```
+## Run
 
-## Running the solution (binary)
+Place the ArkScript directory on your PATH, then run:
 
-Download the binary for your platform in [the latest 4.0.0 pre-release](https://github.com/ArkScript-lang/Ark/releases/tag/v4.0.0-10).
+    arkscript -fno-cache lambda-core.ark
 
-Extract the zip, you will need both `arkscript` and `libArkReactor.(so|dll)` in the same directory.
+The no-cache flag prevents ArkScript from creating a generated
+`__arkscript__` directory beside this source file.
 
-```
-chmod u+x arkscript
-./arkscript lambda-core.ark
-```
+## Test
 
-## Other way of installing ArkScript
+    sh test.sh
 
-See the documentation: [arkscript-lang.dev/tutorials/building.html](https://arkscript-lang.dev/tutorials/building.html).
-
+The repository test harness compares that command's output byte-for-byte with
+`expected-output.txt`. If ArkScript is not installed, the test is reported as
+a local toolchain skip; a missing interpreter is a failure in CI.

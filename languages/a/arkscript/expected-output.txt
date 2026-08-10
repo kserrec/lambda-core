@@ -1,0 +1,30 @@
+Logic
+-----
+True / False
+true
+false
+Not
+false
+true
+And
+true
+false
+false
+false
+Or
+true
+true
+true
+false
+
+Church Numerals
+---------------
+Zero / Succ
+0
+1
+2
+3
+Pred
+0
+1
+2

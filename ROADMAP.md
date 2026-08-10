@@ -50,7 +50,7 @@ Folders without a `test.sh` are skipped until backfilled.
 One language per step, each landing as its own PR with implementation, README,
 test.sh, and expected output, CI-green before merge. Order roughly by reach:
 
-- [ ] Rust
+- [x] Rust
 - [ ] C#
 - [ ] Swift
 - [ ] Scala

@@ -47,15 +47,41 @@ Folders without a `test.sh` are skipped until backfilled.
 
 ## Milestone 2 — fill out the missing major languages
 
-One language per step, each landing as its own PR with implementation, README,
-test.sh, and expected output, CI-green before merge. Order roughly by reach:
+Most additions land one language at a time with an implementation, README,
+test.sh, and observed expected output. The five-language batch below is one
+explicitly requested single-pass phase.
 
-- [ ] Rust
+### Phase 1 — 2025 popularity expansion
+
+Selection method: filter the Stack Overflow 2025 "have used" language ranking
+against the repository's existing implementations, excluding HTML/CSS because
+it is markup. The five highest absent entries are SQL (58.6%), Bash/Shell
+(48.7%), PowerShell (23.2%), PHP (18.9%), and Rust (14.8%). GitHub's 2025
+Octoverse independently places PHP and Shell in its top ten, while the August
+2026 TIOBE index ranks SQL eighth, Rust tenth, and PHP thirteenth.
+
+- [x] **Step 1 — verify the selection and starting state.** None of the five
+      language folders existed before this phase; choosing them creates new
+      implementations rather than fixing existing ones.
+- [x] **Step 2 — implement all five cores.** Add Church booleans, Church
+      numerals, native output adapters, and self-checking examples for Bash,
+      PHP, PowerShell, Rust, and SQL. SQL may use an explicitly documented
+      relational emulation because SQLite has no first-class functions.
+- [x] **Step 3 — add verification artifacts.** Every folder gets README.md,
+      test.sh, and expected-output.txt captured from an observed run.
+- [x] **Step 4 — integrate and verify.** Verify the five toolchains in the
+      current GitHub runner inventory (all are preinstalled), list the new
+      implementations in the README, run focused checks, and run the repository
+      harness. All five focused baseline checks pass; the full local harness
+      reports 11 passed, 0 failed, 10 skipped for unavailable local toolchains,
+      and the pre-existing Java baseline still pending.
+
+### Later major-language phases
+
 - [ ] C#
 - [ ] Swift
 - [ ] Scala
 - [ ] Zig
-- [ ] PHP
 - [ ] Dart
 - [ ] Gleam (reopens the slot from closed PR #28)
 

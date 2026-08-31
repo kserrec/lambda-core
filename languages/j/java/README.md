@@ -1,23 +1,22 @@
-# Java 21 Installation Guide
+# Java Lambda Core
 
-## Download Java 21
-Download Java 21 from the official Oracle website:
-[Java 21 Downloads](https://www.oracle.com/in/java/technologies/downloads/#java21)
+This implementation requires a Java Development Kit version 11 or newer.
+Java's source-file mode compiles and runs `LambdaCore.java` directly, so no
+separate build command or external package is needed.
 
-## Installation Steps
-1. Select the appropriate JDK version for your OS (Windows, macOS, or Linux).
-2. Download the installer or compressed archive.
-3. Follow the installation instructions provided by Oracle.
-
-## Verify Installation
-Run the following command to check the installed Java version:
-
-```sh
-java -version
-```
-
-# Run Code
+## Run
 
 ```sh
 java LambdaCore.java
 ```
+
+## Test
+
+From this folder, run:
+
+```sh
+sh test.sh
+```
+
+The repository's root `run-tests.sh` compares the program's output with
+`expected-output.txt` on every pull request.

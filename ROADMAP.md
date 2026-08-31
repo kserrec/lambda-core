@@ -31,10 +31,11 @@ Folders without a `test.sh` are skipped until backfilled.
       dotnet. OCaml + Elixir captured locally; F# and Clojure captured from the
       CI log (PR #31). Clojure uses `clojure`, not the interactive `clj` wrapper
       (which printed an rlwrap notice instead of running). All four green on CI.
-- [ ] **Step 5 — Java and Kotlin.** Java: PR #29 (the `java` branch) fixes the
-      numeral typing so PRED works; add test.sh + expected output to that
-      branch, let CI validate it, then merge #29. Kotlin: runner has a JDK;
-      install kotlinc in the workflow.
+- [x] **Step 5 — Java and Kotlin.** Java's numeral fix and `test.sh` landed in
+      PR #29; its expected output was captured from that PR's actual CI run.
+      Kotlin's existing implementation compiles unchanged with Kotlin 2.4.10;
+      its test builds a temporary runnable jar. GitHub's `ubuntu-latest` runner
+      already provides Kotlin 2.4.10 and Java 17, so no installer is needed.
 - [ ] **Step 6 — exotic languages: ArkScript, FatScript, bruijn, Language 84.**
       Each needs its own toolchain acquisition (GitHub releases, cargo/stack
       installs, or building from source). If one is genuinely unobtainable in
@@ -120,5 +121,3 @@ Keep a "wanted" list in the README for languages left open to contributors
       spec or needs a runtime supplement.
 - [ ] Comment on merged PR #6 noting the `Function<Term, Term>` fix, closing
       the loop on the thread there.
-- [ ] Java README still describes an Oracle JDK manual install — point it at
-      apt/Temurin and the test.sh instead.

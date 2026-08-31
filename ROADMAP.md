@@ -95,10 +95,11 @@ already exists in active PR #37. The next five absent languages are Assembly
       first-class closure type.
 - [x] **Step 3 — add verification artifacts.** Every folder gets README.md,
       test.sh, and expected-output.txt captured from an observed run.
-- [ ] **Step 4 — integrate and verify.** Use the runner's preinstalled GCC,
+- [x] **Step 4 — integrate and verify.** Use the runner's preinstalled GCC,
       Swift, and Gradle toolchains; install only the R and Dart runtimes; list
       the new implementations in the README; run every focused check and the
-      repository harness.
+      repository harness. GitHub CI reports 25 passed, 0 failed, 0 skipped,
+      and the pre-existing Java baseline still pending (PR #39).
 
 ### Later major-language phases
 

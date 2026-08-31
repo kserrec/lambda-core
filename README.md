@@ -14,22 +14,23 @@ This project is inspired by the classic "hello-world" repo idea, but takes thing
 
 Lambda Core currently has implementations in:
 
-- [ArkScript](languages/a/arkscript), [Bash](languages/b/bash), and
-  [bruijn](languages/b/bruijn)
-- [C](languages/c/c), [C++](languages/c/c++), and
-  [Clojure](languages/c/clojure)
+- [ArkScript](languages/a/arkscript), [Assembly](languages/a/assembly),
+  [Bash](languages/b/bash), and [bruijn](languages/b/bruijn)
+- [C](languages/c/c), [C++](languages/c/c++),
+  [Clojure](languages/c/clojure), and [Dart](languages/d/dart)
 - [Elixir](languages/e/elixir), [FatScript](languages/f/fatscript), and
   [F#](languages/f/fsharp)
-- [Go](languages/g/go), [Haskell](languages/h/haskell),
+- [Go](languages/g/go), [Groovy](languages/g/groovy),
+  [Haskell](languages/h/haskell),
   [Java](languages/j/java), and [JavaScript](languages/j/javascript)
 - [Kotlin](languages/k/kotlin), [Language 84](languages/l/language84), and
   [Lua](languages/l/lua)
 - [OCaml](languages/o/ocaml), [Perl](languages/p/perl),
   [PHP](languages/p/php), [PowerShell](languages/p/powershell), and
   [Python](languages/p/python)
-- [Racket](languages/r/racket), [Ruby](languages/r/ruby),
-  [Rust](languages/r/rust), [SQL](languages/s/sql), and
-  [TypeScript](languages/t/typescript)
+- [R](languages/r/r), [Racket](languages/r/racket), [Ruby](languages/r/ruby),
+  [Rust](languages/r/rust), [SQL](languages/s/sql),
+  [Swift](languages/s/swift), and [TypeScript](languages/t/typescript)
 
 The August 2026 expansion added Bash, PHP, PowerShell, Rust, and SQL by
 filtering the [2025 Stack Overflow language usage results](https://survey.stackoverflow.co/2025/technology)
@@ -38,7 +39,10 @@ against the implementations already present. GitHub's
 and the [August 2026 TIOBE index](https://www.tiobe.com/tiobe-index/) were used
 as cross-checks.
 
-Still wanted: Swift, Scala, Zig, Dart, Gleam, Prolog, Erlang, APL, and Idris.
+The second August 2026 expansion continued down the same Stack Overflow
+ranking and added Assembly, Dart, Swift, R, and Groovy.
+
+Still wanted: Scala, Zig, Gleam, Prolog, Erlang, APL, and Idris.
 
 ---
 

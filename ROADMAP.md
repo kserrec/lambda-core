@@ -76,13 +76,35 @@ Octoverse independently places PHP and Shell in its top ten, while the August
       reports 11 passed, 0 failed, 10 skipped for unavailable local toolchains,
       and the pre-existing Java baseline still pending.
 
+### Phase 2 — next five languages by 2025 usage
+
+Selection method: continue down the Stack Overflow 2025 "have used" language
+ranking after removing repository implementations and C#, whose implementation
+already exists in active PR #37. The next five absent languages are Assembly
+(7.1%), Dart (5.9%), Swift (5.4%), R (4.9%), and Groovy (4.8%).
+
+- [x] **Step 1 — verify the selection and starting state.** None of
+      `languages/a/assembly`, `languages/d/dart`, `languages/s/swift`,
+      `languages/r/r`, or `languages/g/groovy` exists on main. This phase
+      creates five new implementations; it does not modify an existing
+      language implementation.
+- [x] **Step 2 — implement all five cores.** Add Church booleans, Church
+      numerals, native output observers, and self-checking examples for
+      Assembly, Dart, Swift, R, and Groovy. Assembly uses an explicitly
+      documented x86-64 System V closure ABI because GNU assembler has no
+      first-class closure type.
+- [x] **Step 3 — add verification artifacts.** Every folder gets README.md,
+      test.sh, and expected-output.txt captured from an observed run.
+- [ ] **Step 4 — integrate and verify.** Use the runner's preinstalled GCC,
+      Swift, and Gradle toolchains; install only the R and Dart runtimes; list
+      the new implementations in the README; run every focused check and the
+      repository harness.
+
 ### Later major-language phases
 
 - [ ] C#
-- [ ] Swift
 - [ ] Scala
 - [ ] Zig
-- [ ] Dart
 - [ ] Gleam (reopens the slot from closed PR #28)
 
 Keep a "wanted" list in the README for languages left open to contributors

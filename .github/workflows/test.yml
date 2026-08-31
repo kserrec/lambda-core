@@ -11,13 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Python, Node.js, Perl, GCC/G++ 14, and the .NET SDK (F#) come
-      # preinstalled on the runner.
+      # Python, Node.js, Perl, GCC/G++ 14, Swift, Gradle (Groovy), and the
+      # .NET SDK (F#) come preinstalled on the runner.
       - name: Install toolchains not preinstalled on the runner
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            racket ruby lua5.4 ghc ocaml elixir
+            racket ruby lua5.4 ghc ocaml elixir r-base-core
 
       # Clojure's deps.edn CLI (clj) is not in apt; use the official installer.
       - name: Install Clojure CLI
@@ -27,6 +27,10 @@ jobs:
           sudo ./linux-install.sh
 
       - uses: oven-sh/setup-bun@v2
+
+      # v1.8.1 omitted dart-analyzer.json from its published bundle; pin the
+      # signed v1.7.2 release until that regression is fixed upstream.
+      - uses: dart-lang/setup-dart@65eb853c7ba17dde3be364c3d2858773e7144260 # v1.7.2
 
       - name: Run all language tests
         run: ./run-tests.sh

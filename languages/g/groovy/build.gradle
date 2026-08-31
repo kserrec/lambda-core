@@ -1,0 +1,7 @@
+apply from: 'lambda-core.groovy'
+
+if (project.hasProperty('lambdaCoreBuildDirectory')) {
+    layout.buildDirectory = file(project.property('lambdaCoreBuildDirectory'))
+}
+
+tasks.register('lambdaCore')
